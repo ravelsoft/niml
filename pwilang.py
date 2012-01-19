@@ -77,12 +77,12 @@ def lineelt(terminator):
     return Either(
         (tag, Optional(_space), ZeroOrMore(attribute), Optional(_space), "[", Optional(line("]")), "]", Action(lambda t, _1, a, _3, _4, i, _6:t.set_attributes(a).set_line(i or ""))),
         (tag, Optional(_space), ZeroOrMore(attribute), Optional(_space), Optional(line(terminator)), Action(lambda t, _1, a, _3, i:t.set_attributes(a).set_line(i))),
-        ('\\', terminator, Action(lambda _0, t:t)),
         variable,
-        (Not(terminator), re.compile('[^@\$\n]+'), Action(lambda c:c))
+        ('\\', re.compile('.'), Action(lambda _0, t:t)),
+        (Not(terminator), re.compile('.'), Action(lambda c:c))
     )
 
-@rule(skip=_space)
+@rule()
 def __line(terminator=EOL):
     return (OneOrMore(lineelt(terminator)), Action(lambda e:NodeLine(e)))
 line.set_rule(__line)

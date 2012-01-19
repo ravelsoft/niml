@@ -45,14 +45,13 @@ lineelt(terminator) =
     | t:tag _space? a:attribute* _space? i:line(terminator)? ->
         t.set_attributes(a).set_line(i)
 
-    | \\ t:terminator -> t
-        # Backslashed terminator.
-
     | variable
 
-    | !terminator c:/[^@\$\n]+/ -> c
+    | \\ t:/./ -> t
+        # Backslashed terminator.
+    | !terminator c:/./ -> c
 
-line(terminator=EOL) skip _space = e:lineelt(terminator)+ -> NodeLine(e)
+line(terminator=EOL) = e:lineelt(terminator)+ -> NodeLine(e)
 
 blockstart(ls) =
       t:tag _space? a:attribute* _space? i:line? EOL b:block(indent(ls)) ->

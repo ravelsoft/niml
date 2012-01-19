@@ -6,7 +6,7 @@ def addend(txt, end):
     return re_endspc.sub(lambda m: end + m.group(0), txt)
 
 class NodeVisitor(object):
-    def __init__(self, compact=True):
+    def __init__(self, compact=False):
         self.compact = compact
         if compact:
             self.joiner = " "
@@ -62,7 +62,7 @@ class NodeVisitor(object):
                     if not isinstance(nxt, NodeJinja) or nxt.name not in ["elif", "else"]:
                         res[-1] = addend(res[-1], "{{% endif %}}".format(b[1].name))
 
-                if b[1].name in ["for", "macro", "filter"]:
+                if b[1].name in ["for", "macro", "filter", "block"]:
                     res[-1] = addend(res[-1], "{{% end{0} %}}".format(b[1].name))
 
             if b[2]:
