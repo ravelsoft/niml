@@ -15,7 +15,7 @@ comment = /\s*#\s.*/m
 _space = /[ \t]*/
 EOL = "\n"
 
-ident = /[-$a-zA-Z0-9:]+/
+ident = /[-$a-zA-Z0-9:_]+/
 
 access_or_funcall = b:[ Balanced("[", "]") | Balanced("(", ")") ] -> b[0] + b[1] + b[2]
 variable_component = i:ident a:access_or_funcall* -> i + "".join(a)
@@ -34,9 +34,9 @@ id = '#' i:ident -> NodeId(i)
 
 cls = "." i:ident -> NodeClass(i)
 
-attrib = key:ident "=" value:[ string | /[^ \t]+/ ] -> NodeNamed(key, value)
+attrib = key:ident "=" value:[ string | line(/\s/) ] -> NodeNamed(key, value)
 
-attribute = id | cls | attrib
+attribute = _space? a:[id | cls | attrib] -> a
 
 lineelt(terminator) =
       t:tag _space? a:attribute* _space? "[" i:line("]")? "]" ->

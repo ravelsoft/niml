@@ -15,28 +15,15 @@ for f in [ "pwilang" ]:
         sys.exit()
 
 from pwpeg import Parser
-from pwilang import block
-from printer import NodeVisitor
+from pwilang.pwilang import block
+from pwilang.printer import NodeVisitor
 
 parser = Parser(block(""))
 
 if __name__ == "__main__":
-    # root = parser.parse("2 * (2 + 3) / 2")
-    # root = parser.parse("var2 = var1 = 2 * (2 + 3) / 2")
-    # root = parser.parse("'ta\\\'ta\\\"' + \\toto + \"t\\\"ut\\\'u\"")
-    # root = parser.parse("res = \"zoum\" in array")
-    # root = parser.parse("res = \"zoum\" not in array")
-    # root = parser.parse("res = \"zoum\" is not \"boum\"")
-    # root = parser.parse("tata.toto = baba.boubou << toto.tata ** 2")
-    # root = parser.parse("3")
-    # root = parser.parse("a(b, d)")
-    # root = parser.parse("a1.a2(bd.be(23, 2e6), d, 'plup', \hey)")
-
-    # from visitor_print import PrintVisitor
-
     for fn in sys.argv[1:]:
         f = open(join(currentdir, fn), "r")
-        root = parser.parse(f.read())
+        root = parser.parse(unicode(f.read(), "utf-8"))
         f.close()
 
         if not root:

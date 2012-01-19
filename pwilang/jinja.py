@@ -1,3 +1,5 @@
+import os.path
+
 from jinja2 import  Environment, TemplateSyntaxError
 from jinja2.ext import Extension
 
@@ -16,7 +18,7 @@ class PwilangExtension(Extension):
             pwilang_file_extensions=('.pwi',),
         )
 
-        self.parser = Parser(pwilang.block)
+        self.parser = Parser(pwilang.block(""))
 
 
     def preprocess(self, source, name, filename=None):
@@ -29,7 +31,5 @@ class PwilangExtension(Extension):
         try:
             root = self.parser.parse(source)
             return visitor.visit(root)
-        except TemplateIndentationError, e:
-            raise TemplateSyntaxError(e.message, e.lineno, name=name, filename=filename)
         except TemplateSyntaxError, e:
             raise TemplateSyntaxError(e.message, e.lineno, name=name, filename=filename)

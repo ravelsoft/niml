@@ -32,7 +32,7 @@ _space = Rule(re.compile('[ \t]*'), name='_space')
 
 EOL = Rule("\n", name='EOL')
 
-ident = Rule(re.compile('[-$a-zA-Z0-9:]+'), name='ident')
+ident = Rule(re.compile('[-$a-zA-Z0-9:_]+'), name='ident')
 
 access_or_funcall = Rule((Either(
     Balanced("[", "]"),
@@ -63,14 +63,14 @@ cls = Rule((".", ident, Action(lambda _0, i:NodeClass(i))), name='cls')
 
 attrib = Rule((ident, "=", Either(
     string,
-    re.compile('[^ \t]+')
+    line(re.compile('\s'))
 ), Action(lambda key, _1, value:NodeNamed(key, value))), name='attrib')
 
-attribute = Rule(Either(
+attribute = Rule((Optional(_space), Either(
     id,
     cls,
     attrib
-), name='attribute')
+), Action(lambda _0, a:a)), name='attribute')
 
 @rule()
 def lineelt(terminator):
