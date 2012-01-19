@@ -1,0 +1,71 @@
+%%
+
+import re
+
+from nodes import *
+
+def indent(init=""):
+    return MemoRule(re.compile("{0}[ \t]+".format(init if not isinstance(init, MemoRule) else init.memorized)))
+
+bck = re.compile("\\\\(.)")
+
+%%
+
+comment = /\s*#\s.*/m
+_space = /[ \t]*/
+EOL = "\n"
+
+ident = /[-$a-zA-Z0-9:]+/
+
+access_or_funcall = b:[ Balanced("[", "]") | Balanced("(", ")") ] -> b[0] + b[1] + b[2]
+variable_component = i:ident a:access_or_funcall* -> i + "".join(a)
+variable = "$" i:OneOrMoreSeparated(variable_component, ".") -> "{{{{ {0} }}}}".format(".".join(i))
+
+delimited_line(delim) = delim l:line(delim)? delim -> l or ""
+
+string = delimited_line("\"") | delimited_line("'")
+
+tag = "@" i:ident -> NodeTag(i)
+    | "@/" i:ident -> NodeTag(i).set_selfclosing()
+        # @/input type=text
+
+id = '#' i:ident -> NodeId(i)
+    # <div id="zoum">
+
+cls = "." i:ident -> NodeClass(i)
+
+attrib = key:ident "=" value:[ string | /[^ \t]+/ ] -> NodeNamed(key, value)
+
+attribute = id | cls | attrib
+
+lineelt(terminator) =
+      t:tag _space? a:attribute* _space? "[" i:line("]")? "]" ->
+        t.set_attributes(a).set_line(i or "")
+
+    | t:tag _space? a:attribute* _space? i:line(terminator)? ->
+        t.set_attributes(a).set_line(i)
+
+    | \\ t:terminator -> t
+        # Backslashed terminator.
+
+    | variable
+
+    | !terminator c:/[^@\$\n]+/ -> c
+
+line(terminator=EOL) skip _space = e:lineelt(terminator)+ -> NodeLine(e)
+
+blockstart(ls) =
+      t:tag _space? a:attribute* _space? i:line? EOL b:block(indent(ls)) ->
+        return t.set_attributes(a).set_block(b).set_line(i)
+
+    | a:attribute+ i:line? EOL b:block(indent(ls))? ->
+        NodeTag("div").set_attributes(a).set_block(b).set_line(i)
+
+    | "%" _space? j:ident c:/[^\n]*/ EOL b:block(indent(ls))? -> NodeJinja(j, c, b)
+
+    | c:line _space? EOL ->
+        return c
+
+block(ls) =
+      i:IndentedBlock(blockstart(ls), ls) -> NodeBlock(i)
+
