@@ -25,9 +25,7 @@ delimited_line(delim) = delim l:line(delim)? delim -> l or ""
 
 string = delimited_line("\"") | delimited_line("'")
 
-tag = "@" i:ident -> NodeTag(i)
-    | "@/" i:ident -> NodeTag(i).set_selfclosing()
-        # @/input type=text
+tag = "@" !"/" i:ident -> NodeTag(i)
 
 id = '#' i:ident -> NodeId(i)
     # <div id="zoum">
@@ -39,7 +37,9 @@ attrib = key:ident "=" value:[ string | line(/\s/) ] -> NodeNamed(key, value)
 attribute = _space? a:[id | cls | attrib] -> a
 
 lineelt(terminator) =
-      t:tag _space? a:attribute* _space? "[" i:line("]")? "]" ->
+       "@/" i:ident a:attribute* -> NodeTag(i).set_selfclosing().set_attributes(a)
+
+    |  t:tag _space? a:attribute* _space? "[" i:line("]")? "]" ->
         t.set_attributes(a).set_line(i or "")
 
     | t:tag _space? a:attribute* _space? i:line(terminator)? ->

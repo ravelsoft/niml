@@ -30,6 +30,11 @@ class PwilangExtension(Extension):
 
         try:
             root = self.parser.parse(source)
-            return visitor.visit(root)
+            result = visitor.visit(root)
+            print(">>>>>>>>>>>>>>>>> " + name)
+            print(source)
+            print("================> " + name)
+            print(result)
+            return result
         except TemplateSyntaxError, e:
             raise TemplateSyntaxError(e.message, e.lineno, name=name, filename=filename)

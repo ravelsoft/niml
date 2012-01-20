@@ -46,13 +46,16 @@ class NodeVisitor(object):
         op = unicode(" ").join(op)
         if op: op = unicode(" ") + op
 
-        res = []
-        res.append(unicode("<{0}{1}>").format(tag.name, op) + self.visit(tag.line))
+        selfclosing = "/" if tag.selfclosing else ""
 
-        if tag.block:
-            res.append(addend(self.visit(tag.block), unicode("</{0}>").format(tag.name)))
-        else:
-            res[0] = addend(res[0], unicode("</{0}>").format(tag.name))
+        res = []
+        res.append(unicode("<{0}{1}{2}>").format(tag.name, op, selfclosing) + self.visit(tag.line))
+
+        if not selfclosing:
+            if tag.block:
+                res.append(addend(self.visit(tag.block), unicode("</{0}>").format(tag.name)))
+            else:
+                res[0] = addend(res[0], unicode("</{0}>").format(tag.name))
 
         return (self.joiner if not self.compact else unicode("")).join(res)
 

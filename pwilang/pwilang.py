@@ -52,10 +52,7 @@ string = Rule(Either(
     delimited_line("'")
 ), name='string')
 
-tag = Rule(Either(
-    ("@", ident, Action(lambda _0, i:NodeTag(i))),
-    ("@/", ident, Action(lambda _0, i:NodeTag(i).set_selfclosing()))
-), name='tag')
+tag = Rule(("@", Not("/"), ident, Action(lambda _0, i:NodeTag(i))), name='tag')
 
 id = Rule(('#', ident, Action(lambda _0, i:NodeId(i))), name='id')
 
@@ -75,6 +72,7 @@ attribute = Rule((Optional(_space), Either(
 @rule()
 def lineelt(terminator):
     return Either(
+        ("@/", ident, ZeroOrMore(attribute), Action(lambda _0, i, a:NodeTag(i).set_selfclosing().set_attributes(a))),
         (tag, Optional(_space), ZeroOrMore(attribute), Optional(_space), "[", Optional(line("]")), "]", Action(lambda t, _1, a, _3, _4, i, _6:t.set_attributes(a).set_line(i or ""))),
         (tag, Optional(_space), ZeroOrMore(attribute), Optional(_space), Optional(line(terminator)), Action(lambda t, _1, a, _3, i:t.set_attributes(a).set_line(i))),
         variable,
