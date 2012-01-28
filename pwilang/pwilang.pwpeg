@@ -22,12 +22,12 @@ _space = /[ \t]*/
 EOL = "\n"
 
 ident = /[-$a-zA-Z0-9:_]+/
-vident = /[$a-zA-Z_][$a-zA-Z0-9_]*/
+vident = /[a-zA-Z_][a-zA-Z0-9_]*/
 
 access_or_funcall = b:[ Balanced("[", "]") | Balanced("(", ")") ] -> b[0] + b[1] + b[2]
 variable_component = i:vident a:access_or_funcall* -> i + "".join(a)
-
-variable = "$" i:OneOrMoreSeparated(variable_component, ".") -> u("{{{{ {0} }}}}").format(u(".").join(i))
+variable_dotted = i:OneOrMoreSeparated(variable_component, ".") -> u(".").join(i)
+variable = "$" i:OneOrMoreSeparated(variable_dotted, "|") -> u("{{{{ {0} }}}}").format(u("|").join(i))
 
 delimited_line(delim) = delim l:line(delim)? delim -> l or ""
 
@@ -35,10 +35,10 @@ string = delimited_line("\"") | delimited_line("'")
 
 tag = "@" !"/" i:ident -> NodeTag(i)
 
-id = '#' i:ident -> NodeId(i)
+id = '#' i:[variable | ident] -> NodeId(i)
     # <div id="zoum">
 
-cls = "." i:ident -> NodeClass(i)
+cls = "." i:[variable | ident] -> NodeClass(i)
 
 attrib = key:ident "=" value:[ string | line(/\s/) ] -> NodeNamed(key, value)
 

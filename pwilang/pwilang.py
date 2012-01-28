@@ -40,7 +40,7 @@ EOL = Rule("\n", name='EOL')
 
 ident = Rule(re.compile('[-$a-zA-Z0-9:_]+'), name='ident')
 
-vident = Rule(re.compile('[$a-zA-Z_][$a-zA-Z0-9_]*'), name='vident')
+vident = Rule(re.compile('[a-zA-Z_][a-zA-Z0-9_]*'), name='vident')
 
 access_or_funcall = Rule((Either(
     Balanced("[", "]"),
@@ -49,7 +49,9 @@ access_or_funcall = Rule((Either(
 
 variable_component = Rule((vident, ZeroOrMore(access_or_funcall), Action(lambda i, a:i + "".join(a))), name='variable_component')
 
-variable = Rule(("$", OneOrMoreSeparated(variable_component, "."), Action(lambda _0, i:u("{{{{ {0} }}}}").format(u(".").join(i)))), name='variable')
+variable_dotted = Rule((OneOrMoreSeparated(variable_component, "."), Action(lambda i:u(".").join(i))), name='variable_dotted')
+
+variable = Rule(("$", OneOrMoreSeparated(variable_dotted, "|"), Action(lambda _0, i:u("{{{{ {0} }}}}").format(u("|").join(i)))), name='variable')
 
 @rule()
 def delimited_line(delim):
@@ -62,9 +64,15 @@ string = Rule(Either(
 
 tag = Rule(("@", Not("/"), ident, Action(lambda _0, i:NodeTag(i))), name='tag')
 
-id = Rule(('#', ident, Action(lambda _0, i:NodeId(i))), name='id')
+id = Rule(('#', Either(
+    variable,
+    ident
+), Action(lambda _0, i:NodeId(i))), name='id')
 
-cls = Rule((".", ident, Action(lambda _0, i:NodeClass(i))), name='cls')
+cls = Rule((".", Either(
+    variable,
+    ident
+), Action(lambda _0, i:NodeClass(i))), name='cls')
 
 attrib = Rule((ident, "=", Either(
     string,

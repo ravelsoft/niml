@@ -33,4 +33,5 @@ class PwilangExtension(Extension):
             result = visitor.visit(root)
             return result
         except TemplateSyntaxError, e:
+            print(result)
             raise TemplateSyntaxError(e.message, e.lineno, name=name, filename=filename)
