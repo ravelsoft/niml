@@ -7,6 +7,12 @@ import re
 
 from nodes import *
 
+try:
+    u = unicode
+except Exception as e:
+    # We're in python 3, so there is no need to coerce.
+    u = lambda x: x
+
 def indent(init=""):
     return MemoRule(re.compile("{0}[ \t]+".format(init if not isinstance(init, MemoRule) else init.memorized)))
 
@@ -34,14 +40,16 @@ EOL = Rule("\n", name='EOL')
 
 ident = Rule(re.compile('[-$a-zA-Z0-9:_]+'), name='ident')
 
+vident = Rule(re.compile('[$a-zA-Z_][$a-zA-Z0-9_]*'), name='vident')
+
 access_or_funcall = Rule((Either(
     Balanced("[", "]"),
     Balanced("(", ")")
 ), Action(lambda b:b[0] + b[1] + b[2])), name='access_or_funcall')
 
-variable_component = Rule((ident, ZeroOrMore(access_or_funcall), Action(lambda i, a:i + "".join(a))), name='variable_component')
+variable_component = Rule((vident, ZeroOrMore(access_or_funcall), Action(lambda i, a:i + "".join(a))), name='variable_component')
 
-variable = Rule(("$", OneOrMoreSeparated(variable_component, "."), Action(lambda _0, i:"{{{{ {0} }}}}".format(".".join(i)))), name='variable')
+variable = Rule(("$", OneOrMoreSeparated(variable_component, "."), Action(lambda _0, i:u("{{{{ {0} }}}}").format(u(".").join(i)))), name='variable')
 
 @rule()
 def delimited_line(delim):

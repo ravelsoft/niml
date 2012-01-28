@@ -4,6 +4,12 @@ import re
 
 from nodes import *
 
+try:
+    u = unicode
+except Exception as e:
+    # We're in python 3, so there is no need to coerce.
+    u = lambda x: x
+
 def indent(init=""):
     return MemoRule(re.compile("{0}[ \t]+".format(init if not isinstance(init, MemoRule) else init.memorized)))
 
@@ -16,10 +22,12 @@ _space = /[ \t]*/
 EOL = "\n"
 
 ident = /[-$a-zA-Z0-9:_]+/
+vident = /[$a-zA-Z_][$a-zA-Z0-9_]*/
 
 access_or_funcall = b:[ Balanced("[", "]") | Balanced("(", ")") ] -> b[0] + b[1] + b[2]
-variable_component = i:ident a:access_or_funcall* -> i + "".join(a)
-variable = "$" i:OneOrMoreSeparated(variable_component, ".") -> "{{{{ {0} }}}}".format(".".join(i))
+variable_component = i:vident a:access_or_funcall* -> i + "".join(a)
+
+variable = "$" i:OneOrMoreSeparated(variable_component, ".") -> u("{{{{ {0} }}}}").format(u(".").join(i))
 
 delimited_line(delim) = delim l:line(delim)? delim -> l or ""
 
