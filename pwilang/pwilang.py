@@ -114,7 +114,7 @@ def blockstart(ls):
         (tag, Optional(_space), ZeroOrMore(attribute), Optional(_space), Optional(line), EOL, block(indent(ls)), Action(action_0)),
         (OneOrMore(attribute), Optional(line), EOL, Optional(block(indent(ls))), Action(lambda a, i, _2, b:NodeTag("div").set_attributes(a).set_block(b).set_line(i))),
         ("%", Optional(_space), ident, re.compile('[^\n]*'), EOL, Optional(block(indent(ls))), Action(lambda _0, _1, j, c, _4, b:NodeJinja(j, c, b))),
-        (line, Optional(_space), EOL, Action(action_1))
+        (line, Optional(_space), Optional(EOL), Action(action_1))
     )
 
 @rule()

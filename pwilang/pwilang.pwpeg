@@ -70,7 +70,7 @@ blockstart(ls) =
 
     | "%" _space? j:ident c:/[^\n]*/ EOL b:block(indent(ls))? -> NodeJinja(j, c, b)
 
-    | c:line _space? EOL ->
+    | c:line _space? EOL? ->
         return c
 
 block(ls) =
