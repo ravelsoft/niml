@@ -8,10 +8,10 @@ from pwpeg import Parser
 from . import niml
 from . import printer
 
-class PwilangExtension(Extension):
+class NimlExtension(Extension):
 
     def __init__(self, environment):
-        super(PwilangExtension, self).__init__(environment)
+        super(NimlExtension, self).__init__(environment)
 
         environment.extend(
             niml_compact=False,
