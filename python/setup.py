@@ -2,12 +2,12 @@
 
 from distutils.core import setup
 
-setup(name='pwilang',
+setup(name='niml',
       version='0.11.3',
-      description='Python pwilang parser',
+      description='Python niml parser',
       author='Christophe Eymard',
       author_email='christophe.eymard@ravelsoft.com',
-      url='http://pwilang.github.com/',
-      packages=['pwilang'],
-      scripts=['scripts/pwilang']
+      url='http://niml.github.com/',
+      packages=['niml'],
+      scripts=['scripts/niml']
      )

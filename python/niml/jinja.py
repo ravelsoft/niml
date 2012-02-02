@@ -5,7 +5,7 @@ from jinja2.ext import Extension
 
 from pwpeg import Parser
 
-from . import pwilang
+from . import niml
 from . import printer
 
 class PwilangExtension(Extension):
@@ -14,19 +14,19 @@ class PwilangExtension(Extension):
         super(PwilangExtension, self).__init__(environment)
 
         environment.extend(
-            pwilang_compact=False,
-            pwilang_file_extensions=('.pwi',),
+            niml_compact=False,
+            niml_file_extensions=('.niml',),
         )
 
-        self.parser = Parser(pwilang.block(""))
+        self.parser = Parser(niml.block(""))
 
 
     def preprocess(self, source, name, filename=None):
         if name is None or os.path.splitext(name)[1] not in \
-            self.environment.pwilang_file_extensions:
+            self.environment.niml_file_extensions:
             return source
 
-        visitor = printer.NodeVisitor(self.environment.pwilang_compact)
+        visitor = printer.NodeVisitor(self.environment.niml_compact)
 
         try:
             root = self.parser.parse(source)

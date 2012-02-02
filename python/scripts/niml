@@ -7,7 +7,7 @@ from os.path import dirname, join
 currentdir = os.getcwd()
 os.chdir(dirname(__file__))
 
-for f in [ "pwilang" ]:
+for f in [ "niml" ]:
     # Recompilation des fichiers de grammaire.
     res = os.system('if [ "{0}.pwpeg" -nt "{0}.py" ]; then\n    echo "Recompiling {0}..."; pwpeg "{0}.pwpeg" > "{0}.py"\nfi'.format(f))
     if res != 0:
@@ -15,8 +15,8 @@ for f in [ "pwilang" ]:
         sys.exit()
 
 from pwpeg import Parser
-from pwilang.pwilang import block
-from pwilang.printer import NodeVisitor
+from niml.niml import block
+from niml.printer import NodeVisitor
 
 parser = Parser(block(""))
 
