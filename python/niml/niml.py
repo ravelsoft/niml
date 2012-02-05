@@ -185,7 +185,7 @@ _space.set_productions(re.compile('[ \t]*'))
 access_or_funcall.set_productions(Either(
     Balanced.instanciate("[", "]", "\\"),
     Balanced.instanciate("(", ")", "\\")
-).set_action(lambda b: (b) ).set_name("Access or Funcall Either"))
+).set_action(lambda b: (b) ))
 
 attrib.set_productions(
     ident,
@@ -226,7 +226,7 @@ id.set_productions(
     )
 ).set_action(lambda _0, i: (NodeId(i)) )
 
-ident.set_productions(re.compile('[-$a-zA-Z0-9:_]+'))
+ident.set_productions(re.compile('[-$\w:]+', re.U))
 
 single_prop.set_productions(
     "\\",
