@@ -7,18 +7,46 @@ from nodes import *
 try:
     u = unicode
 except Exception as e:
-    # We're in python 3, so there is no need to coerce.
-    u = lambda x: x
+    u = str
 
-def indent(init=""):
-    return MemoRule(re.compile("{0}[ \t]+".format(init if not isinstance(init, MemoRule) else init.memorized)))
+_is = [] # _is is short for "Indent Stack"
+def checkindent(indent, start):
+    sindent = len(start) - start.rfind('\n') - 1
+    ci = len(_is) # Current indent index
 
-bck = re.compile("\\\\(.)")
+    if indent == ci:
+        # We're looking at a new indentation, to potentially push it
+        # on the stack if we can.
+
+        if ci == 0 or sindent > _is[-1]:
+            _is.append(sindent)
+            return True
+
+        # It is not higher, so we just tell the parser that we
+        # can't continue on that indentation level.
+        return False
+
+    if indent == ci - 1:
+        # We're in the current block and want to check if this
+        # line is correctly indented.
+
+        # We're at the correct level, so we just return True
+        if sindent == _is[-1]: return True
+
+        # The indentation is superior, which is not logical !
+        if sindent > _is[-1]: raise Exception("Incorrect indent")
+
+        # We're looking at a deindent, so we pop the current indent
+        # level from the stack.
+        _is.pop()
+        return False
+
 
 %%
 
 comment = /\s*#\s.*/m
 _space = /[ \t]*/
+fullspace = /([ \t]*\n)*[ \t]*/
 EOL = "\n"
 
 ident = /[-$a-zA-Z0-9:_]+/
@@ -61,18 +89,20 @@ lineelt(terminator) =
 
 line(terminator=EOL) = e:lineelt(terminator)+ -> NodeLine(e)
 
-blockstart(ls) =
-      t:tag _space? a:attribute* _space? i:line? EOL b:block(indent(ls)) ->
+blockstart(indent) =
+      t:tag _space? a:attribute* _space? i:line? EOL b:block(indent + 1) ->
         return t.set_attributes(a).set_block(b).set_line(i)
 
-    | a:attribute+ i:line? EOL b:block(indent(ls))? ->
+    | a:attribute+ i:line? EOL b:block(indent + 1)? ->
         NodeTag("div").set_attributes(a).set_block(b).set_line(i)
 
-    | "%" _space? j:ident c:/[^\n]*/ EOL b:block(indent(ls))? -> NodeJinja(j, c, b)
+    | "%" _space? j:ident c:/[^\n]*/ EOL b:block(indent + 1)? -> NodeJinja(j, c, b)
 
     | c:line _space? EOL? ->
         return c
 
-block(ls) =
-      i:IndentedBlock(blockstart(ls), ls) -> NodeBlock(i)
-
+block(indent) =
+    lines:[
+        start:fullspace { checkindent(indent, start) } block:blockstart(indent) -> [start, block]
+    ]+ ->
+        return NodeBlock(lines)

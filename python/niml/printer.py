@@ -77,9 +77,9 @@ class NodeVisitor(object):
                 if b[1].name in ["for", "macro", "filter", "block"]:
                     res[-1] = addend(res[-1], unicode("{{% end{0} %}}").format(b[1].name))
 
-            if b[2]:
-                for l in b[2].split("\n")[:-1]:
-                    res.append("")
+            #if b[2]:
+            #    for l in b[2].split("\n")[:-1]:
+            #        res.append("")
         return self.joiner.join(res)
 
     def NodeJinja(self, j):

@@ -7,25 +7,23 @@ from os.path import dirname, join
 currentdir = os.getcwd()
 os.chdir(dirname(__file__))
 
-for f in [ "niml" ]:
-    # Recompilation des fichiers de grammaire.
-    res = os.system('if [ "{0}.pwpeg" -nt "{0}.py" ]; then\n    echo "Recompiling {0}..."; pwpeg "{0}.pwpeg" > "{0}.py"\nfi'.format(f))
-    if res != 0:
-        print(f)
-        sys.exit()
-
-from pwpeg import Parser
+from pwpeg import Parser, SyntaxError
 from niml.niml import block
 from niml.printer import NodeVisitor
 
-parser = Parser(block(""))
+parser = Parser(block.instanciate(0))
 
 if __name__ == "__main__":
     for fn in sys.argv[1:]:
         f = open(join(currentdir, fn), "r")
-        root = parser.parse(unicode(f.read(), "utf-8"))
-        f.close()
+        try:
+            root = parser.parse(unicode(f.read(), "utf-8"))
+            if not root:
+                continue
+            print(NodeVisitor().visit(root))
+        except SyntaxError as e:
+            print(e.fullmessage())
+        finally:
+            f.close()
 
-        if not root:
-            continue
-        print(NodeVisitor().visit(root))
+
