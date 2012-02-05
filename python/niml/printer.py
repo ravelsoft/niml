@@ -42,7 +42,9 @@ class NodeVisitor(object):
         if tag.id:
             op.append(unicode('id="{0}"').format(tag.id))
         if tag.attribs:
-            op.append(" ".join([ unicode('{0}="{1}"').format(key, self.visit(value)) for key, value in tag.attribs.items()] ))
+            op.append(unicode(" ").join([ unicode('{0}="{1}"').format(key, self.visit(value)) for key, value in tag.attribs.items()] ))
+        if tag.singles:
+            op.append(unicode(" ").join(tag.singles))
         op = unicode(" ").join(op)
         if op: op = unicode(" ") + op
 

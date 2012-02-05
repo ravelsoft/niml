@@ -60,6 +60,7 @@ comment = Rule().set_name("comment")
 fullspace = Rule().set_name("fullspace")
 id = Rule().set_name("id")
 ident = Rule().set_name("ident")
+single_prop = Rule().set_name("single_prop")
 string = Rule().set_name("string")
 tag = Rule().set_name("tag")
 variable = Rule().set_name("variable")
@@ -182,9 +183,9 @@ EOL.set_productions("\n")
 _space.set_productions(re.compile('[ \t]*'))
 
 access_or_funcall.set_productions(Either(
-    Balanced.instanciate("[", "]"),
-    Balanced.instanciate("(", ")")
-).set_action(lambda b: (b[0] + b[1] + b[2]) ))
+    Balanced.instanciate("[", "]", "\\"),
+    Balanced.instanciate("(", ")", "\\")
+).set_action(lambda b: (b) ).set_name("Access or Funcall Either"))
 
 attrib.set_productions(
     ident,
@@ -200,6 +201,7 @@ attribute.set_productions(
     Either(
         id,
         cls,
+        single_prop,
         attrib
     )
 ).set_action(lambda _0, a: (a) )
@@ -225,6 +227,14 @@ id.set_productions(
 ).set_action(lambda _0, i: (NodeId(i)) )
 
 ident.set_productions(re.compile('[-$a-zA-Z0-9:_]+'))
+
+single_prop.set_productions(
+    "\\",
+    Either(
+        variable,
+        ident
+    )
+).set_action(lambda _0, i: (NodeSingle(i)) )
 
 string.set_productions(Either(
     delimited_line.instanciate("\""),

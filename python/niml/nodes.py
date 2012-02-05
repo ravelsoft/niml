@@ -5,6 +5,7 @@ class NodeAttribute(object):
     def __init__(self, value): self.value = value
 class NodeClass(NodeAttribute): pass
 class NodeId(NodeAttribute): pass
+class NodeSingle(NodeAttribute): pass
 
 class NodeNamed(NodeAttribute):
     def __init__(self, name, value):
@@ -26,6 +27,7 @@ class NodeTag(object):
         self.classes = set()
         self.id = None
         self.attribs = dict()
+        self.singles = set()
         self.block = None
         self.line = None
         self.selfclosing = False
@@ -37,6 +39,8 @@ class NodeTag(object):
             self.classes.add(a.value)
         if isinstance(a, NodeNamed):
             self.attribs[a.name] = a.value
+        if isinstance(a, NodeSingle):
+            self.singles.add(a.value)
         return self
 
     def set_attributes(self, attrs=[]):
