@@ -31,10 +31,7 @@ def checkindent(indent, start):
         # line is correctly indented.
 
         # We're at the correct level, so we just return True
-        if sindent == _is[-1]: return True
-
-        # The indentation is superior, which is not logical !
-        if sindent > _is[-1]: raise Exception("Incorrect indent")
+        if sindent >= _is[-1]: return True
 
         # We're looking at a deindent, so we pop the current indent
         # level from the stack.
@@ -102,6 +99,8 @@ blockstart(indent) =
 
     | c:line _space? EOL? ->
         return c
+
+    | s:_space? e:EOL? -> s + e
 
 block(indent) =
     lines:[

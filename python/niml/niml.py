@@ -36,10 +36,7 @@ def checkindent(indent, start):
         # line is correctly indented.
 
         # We're at the correct level, so we just return True
-        if sindent == _is[-1]: return True
-
-        # The indentation is superior, which is not logical !
-        if sindent > _is[-1]: raise Exception("Incorrect indent")
+        if sindent >= _is[-1]: return True
 
         # We're looking at a deindent, so we pop the current indent
         # level from the stack.
@@ -124,7 +121,11 @@ def _blockstart(indent):
             line,
             Optional(_space),
             Optional(EOL)
-        ).set_action(action_1)
+        ).set_action(action_1),
+        Rule(
+            Optional(_space),
+            Optional(EOL)
+        ).set_action(lambda s, e: (s + e) )
     )
 blockstart.set_fn(_blockstart)
 
