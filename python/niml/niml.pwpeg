@@ -9,9 +9,12 @@ try:
 except Exception as e:
     u = str
 
+def getindent(start):
+    return len(start) - start.rfind('\n') - 1
+
 _is = [] # _is is short for "Indent Stack"
 def checkindent(indent, start):
-    sindent = len(start) - start.rfind('\n') - 1
+    sindent = getindent(start)
     ci = len(_is) # Current indent index
 
     if indent == ci:
@@ -38,6 +41,13 @@ def checkindent(indent, start):
         _is.pop()
         return False
 
+def higherindent(start):
+    sindent = len(start) - start.rfind('\n') - 1
+    return sindent > _is[-1]
+
+
+def lastindent():
+    return _is[-1]
 
 %%
 
@@ -59,6 +69,7 @@ delimited_line(delim) = delim l:line(delim)? delim -> l or ""
 string = delimited_line("\"") | delimited_line("'")
 
 tag = "@" !"/" i:ident -> NodeTag(i)
+extern_tag = ":" i:["plain" | "javascript" | "css" | "coco" | "coffeescript" | "coffee" | "sass" | "scss"] -> NodeExtern(i)
 
 id = '#' i:[variable | ident] -> NodeId(i)
     # <div id="zoum">
@@ -88,6 +99,15 @@ lineelt(terminator) =
 
 line(terminator=EOL) = e:lineelt(terminator)+ -> NodeLine(e)
 
+blockraw =
+    lines:[
+        start:fullspace { higherindent(start) } contents:/[^\n]*/ ->
+            # We just nuke the indentation from the raw text.
+            return [start, contents]
+    ]+ ->
+        return [lastindent(), lines]
+
+
 blockstart(indent) =
       t:tag _space? a:attribute* _space? i:line? EOL b:block(indent + 1) ->
         return t.set_attributes(a).set_block(b).set_line(i)
@@ -97,10 +117,12 @@ blockstart(indent) =
 
     | "%" _space? j:ident c:/[^\n]*/ EOL b:block(indent + 1)? -> NodeJinja(j, c, b)
 
+    | t:extern_tag a:attribute* _space? EOL b:blockraw? EOL? -> t.set_attributes(a).set_block(b)
+
     | c:line _space? EOL? ->
         return c
 
-    | s:_space? e:EOL? -> s + e
+    | s:_space? e:EOL? -> (s or "")
 
 block(indent) =
     lines:[

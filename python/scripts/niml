@@ -20,9 +20,11 @@ if __name__ == "__main__":
             root = parser.parse(unicode(f.read(), "utf-8"))
             if not root:
                 continue
-            print(NodeVisitor().visit(root))
+            sys.stdout.write(NodeVisitor().visit(root))
+            sys.stdout.write("\n")
         except SyntaxError as e:
-            print(e.fullmessage())
+            sys.stderr.write(e.fullmessage())
+            sys.stderr.write("\n")
         finally:
             f.close()
 

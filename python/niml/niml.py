@@ -14,9 +14,12 @@ try:
 except Exception as e:
     u = str
 
+def getindent(start):
+    return len(start) - start.rfind('\n') - 1
+
 _is = [] # _is is short for "Indent Stack"
 def checkindent(indent, start):
-    sindent = len(start) - start.rfind('\n') - 1
+    sindent = getindent(start)
     ci = len(_is) # Current indent index
 
     if indent == ci:
@@ -43,6 +46,14 @@ def checkindent(indent, start):
         _is.pop()
         return False
 
+def higherindent(start):
+    sindent = len(start) - start.rfind('\n') - 1
+    return sindent > _is[-1]
+
+
+def lastindent():
+    return _is[-1]
+
 # End of included code
 ##############################################################
 
@@ -52,8 +63,10 @@ _space = Rule().set_name("_space")
 access_or_funcall = Rule().set_name("access_or_funcall")
 attrib = Rule().set_name("attrib")
 attribute = Rule().set_name("attribute")
+blockraw = Rule().set_name("blockraw")
 cls = Rule().set_name("cls")
 comment = Rule().set_name("comment")
+extern_tag = Rule().set_name("extern_tag")
 fullspace = Rule().set_name("fullspace")
 id = Rule().set_name("id")
 ident = Rule().set_name("ident")
@@ -76,21 +89,21 @@ lineelt = FunctionRule().set_name("lineelt")
 
 # Function Rules implementation
 def _block(indent):
-    def action_2(lines):
+    def action_4(lines):
         return NodeBlock(lines)
 
     return OneOrMore(Rule(
         fullspace,
         lambda start: ( checkindent(indent, start) ) ,
         blockstart.instanciate(indent)
-    ).set_action(lambda start, block: ([start, block]) )).set_action(action_2)
+    ).set_action(lambda start, block: ([start, block]) )).set_action(action_4)
 block.set_fn(_block)
 
 def _blockstart(indent):
-    def action_0(t, _1, a, _3, i, _5, b):
+    def action_2(t, _1, a, _3, i, _5, b):
         return t.set_attributes(a).set_block(b).set_line(i)
 
-    def action_1(c, _1, _2):
+    def action_3(c, _1, _2):
         return c
 
     return Either(
@@ -102,7 +115,7 @@ def _blockstart(indent):
             Optional(line),
             EOL,
             block.instanciate(indent + 1)
-        ).set_action(action_0),
+        ).set_action(action_2),
         Rule(
             OneOrMore(attribute),
             Optional(line),
@@ -118,14 +131,22 @@ def _blockstart(indent):
             Optional(block.instanciate(indent + 1))
         ).set_action(lambda _0, _1, j, c, _4, b: (NodeJinja(j, c, b)) ),
         Rule(
+            extern_tag,
+            ZeroOrMore(attribute),
+            Optional(_space),
+            EOL,
+            Optional(blockraw),
+            Optional(EOL)
+        ).set_action(lambda t, a, _2, _3, b, _5: (t.set_attributes(a).set_block(b)) ),
+        Rule(
             line,
             Optional(_space),
             Optional(EOL)
-        ).set_action(action_1),
+        ).set_action(action_3),
         Rule(
             Optional(_space),
             Optional(EOL)
-        ).set_action(lambda s, e: (s + e) )
+        ).set_action(lambda s, e: ((s or "")) )
     )
 blockstart.set_fn(_blockstart)
 
@@ -207,6 +228,19 @@ attribute.set_productions(
     )
 ).set_action(lambda _0, a: (a) )
 
+def action_0(start, contents):
+    # We just nuke the indentation from the raw text.
+    return [start, contents]
+
+def action_1(lines):
+    return [lastindent(), lines]
+
+blockraw.set_productions(OneOrMore(Rule(
+    fullspace,
+    lambda start: ( higherindent(start) ) ,
+    re.compile('[^\n]*')
+).set_action(action_0)).set_action(action_1))
+
 cls.set_productions(
     ".",
     Either(
@@ -216,6 +250,19 @@ cls.set_productions(
 ).set_action(lambda _0, i: (NodeClass(i)) )
 
 comment.set_productions(re.compile('\s*#\s.*', re.M))
+
+extern_tag.set_productions(
+    ":",
+    Either(
+        "plain",
+        "javascript",
+        "css",
+        "coco",
+        "coffeescript",
+        "sass",
+        "scss"
+    )
+).set_action(lambda _0, i: (NodeExtern(i)) )
 
 fullspace.set_productions(re.compile('([ \t]*\n)*[ \t]*'))
 

@@ -58,3 +58,25 @@ class NodeTag(object):
     def set_selfclosing(self, selfclosing=True):
         self.selfclosing = selfclosing
         return self
+
+class NodeExtern(NodeTag):
+    def __init__(self, name):
+        self.extern_name = name
+
+        if name in ["css", "sass", "scss"]:
+            super(NodeExtern, self).__init__("style")
+            self.set_attributes([
+                NodeNamed("rel", "stylesheet"),
+                NodeNamed("type", "text/css")
+            ])
+        elif name in ["javascript", "coffeescript", "coco", "coffee"]:
+            super(NodeExtern, self).__init__("script")
+            self.set_attributes([
+                NodeNamed("type", "text/javascript")
+            ])
+        else:
+            super(NodeExtern, self).__init__(name)
+
+    def set_block(self, block):
+        self.block = block
+        return self

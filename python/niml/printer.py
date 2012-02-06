@@ -1,9 +1,52 @@
-from nodes import NodeJinja
 import re
+from subprocess import check_output, Popen, PIPE
+
+from .nodes import NodeJinja, NodeBlock, NodeLine
+from .niml import getindent
 
 re_endspc = re.compile("([ \t]*\n)*$")
 def addend(txt, end):
     return re_endspc.sub(lambda m: end + m.group(0), txt)
+
+def adjuststarts(indent, linelists):
+    lowest = None
+
+    for l in linelists:
+        i = getindent(l[0])
+        if lowest is None or i < lowest:
+            lowest = i
+
+    if indent is None:
+        result = [[l[0][:-lowest], l[1]] for l in linelists]
+        result[0][0] = "\n" + result[0][0]
+        return result
+    else:
+        finalindent = lowest - indent
+
+        result = [[l[0][:-finalindent], l[1]] for l in linelists]
+        # First line has a strange indent.
+        result[0][0] = "\n" + result[0][0]# [:-indent]
+        return result
+
+def compile_coco(txt):
+    return check_output(["coco", "-bpce", txt])
+
+def compile_coffee(txt):
+    return check_output(["coffee", "-bce", txt])
+
+def compile_sass(txt):
+    p = Popen(["sass", "-s"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    res = p.communicate(txt)
+    if res[1]:
+        raise Exception(res[1])
+    return res[0]
+
+def compile_scss(txt):
+    p = Popen(["sass", "-s", "--scss"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    res = p.communicate(txt)
+    if res[1]:
+        raise Exception(res[1])
+    return res[0]
 
 # Python 3 compatibility gimmick to avoid unicode errors.
 try:
@@ -82,6 +125,37 @@ class NodeVisitor(object):
             #if b[2]:
             #    for l in b[2].split("\n")[:-1]:
             #        res.append("")
+        return self.joiner.join(res)
+
+    def NodeExtern(self, node):
+        res = []
+        indent, lines = node.block
+
+        if node.name == "plain":
+            lines = adjuststarts(indent, lines)
+            txt = "".join([b[0] + b[1] for b in lines])
+            res.append(txt)
+
+        # We're going to format code, so we eat all the useless indent.
+        else:
+            lines = adjuststarts(None, lines)
+            txt = "".join([b[0] + b[1] for b in lines])
+
+            if node.extern_name == "coco":
+                txt = compile_coco(txt)
+            if node.extern_name in ["coffeescript", "coffee"]:
+                txt = compile_coffee(txt)
+            if node.extern_name == "scss":
+                txt = compile_scss(txt)
+            if node.extern_name == "sass":
+                txt = compile_sass(txt)
+
+
+            txt = "<![CDATA[{0}]]>".format(txt)
+            node.block = None
+            node.set_line(NodeLine([ txt ]))
+            res.append(self.NodeTag(node))
+
         return self.joiner.join(res)
 
     def NodeJinja(self, j):
