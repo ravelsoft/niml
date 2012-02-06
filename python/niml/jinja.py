@@ -18,7 +18,7 @@ class NimlExtension(Extension):
             niml_file_extensions=('.niml',),
         )
 
-        self.parser = Parser(niml.block(""))
+        self.parser = Parser(niml.block.instanciate(0))
 
 
     def preprocess(self, source, name, filename=None):

@@ -207,7 +207,7 @@ _space.set_productions(re.compile('[ \t]*'))
 access_or_funcall.set_productions(Either(
     Balanced.instanciate("[", "]", "\\"),
     Balanced.instanciate("(", ")", "\\")
-).set_action(lambda b: (b) ))
+).set_action(lambda b: ("".join(b)) ))
 
 attrib.set_productions(
     ident,
