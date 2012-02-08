@@ -153,8 +153,6 @@ class NodeVisitor(object):
             if node.extern_name == "sass":
                 txt = compile_sass(txt)
 
-
-            txt = "<![CDATA[{0}]]>".format(txt)
             node.block = None
             node.set_line(NodeLine([ txt ]))
             res.append(self.NodeTag(node))
