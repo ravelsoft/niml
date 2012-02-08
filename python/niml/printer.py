@@ -128,6 +128,9 @@ class NodeVisitor(object):
         return self.joiner.join(res)
 
     def NodeExtern(self, node):
+        if not node.block:
+            return ""
+
         res = []
         indent, lines = node.block
 

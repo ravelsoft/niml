@@ -9,5 +9,6 @@ setup(name='niml',
       author_email='christophe.eymard@ravelsoft.com',
       url='http://niml.github.com/',
       packages=['niml'],
-      scripts=['scripts/niml']
+      scripts=['scripts/niml'],
+      requires=['pwpeg']
      )
