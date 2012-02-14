@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='niml',
-      version='0.12.1',
+      version='0.12.2',
       description='Python niml parser',
       author='Christophe Eymard',
       author_email='christophe.eymard@ravelsoft.com',
