@@ -32,6 +32,6 @@ class NimlExtension(Extension):
             root = self.parser.parse(source)
             result = visitor.visit(root)
             return result
-        except TemplateSyntaxError, e:
+        except TemplateSyntaxError as e:
             print(result)
             raise TemplateSyntaxError(e.message, e.lineno, name=name, filename=filename)

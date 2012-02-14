@@ -54,6 +54,8 @@ def higherindent(start):
 def lastindent():
     return _is[-1]
 
+allbut_jinja_print = allbut_regexp("}}", '"}}"')
+
 # End of included code
 ##############################################################
 
@@ -89,14 +91,24 @@ lineelt = FunctionRule().set_name("lineelt")
 
 # Function Rules implementation
 def _block(indent):
-    def action_4(lines):
+    def fn_4(lines):
+        
+                if indent == 0:
+                    global _is
+                    _is = []
+                
+
+    def action_5(lines):
         return NodeBlock(lines)
 
-    return OneOrMore(Rule(
-        fullspace,
-        lambda start: ( checkindent(indent, start) ) ,
-        blockstart.instanciate(indent)
-    ).set_action(lambda start, block: ([start, block]) )).set_action(action_4)
+    return Rule(
+        OneOrMore(Rule(
+            fullspace,
+            lambda start: ( checkindent(indent, start) ) ,
+            blockstart.instanciate(indent)
+        ).set_action(lambda start, block: ([start, block]) )),
+        fn_4
+    ).set_action(action_5)
 block.set_fn(_block)
 
 def _blockstart(indent):
@@ -243,11 +255,11 @@ blockraw.set_productions(OneOrMore(Rule(
 
 cls.set_productions(
     ".",
-    Either(
+    OneOrMore(Either(
         variable,
         ident
-    )
-).set_action(lambda _0, i: (NodeClass(i)) )
+    ))
+).set_action(lambda _0, i: (NodeClass("".join(i))) )
 
 comment.set_productions(re.compile('\s*#\s.*', re.M))
 
@@ -259,6 +271,7 @@ extern_tag.set_productions(
         "css",
         "coco",
         "coffeescript",
+        "coffee",
         "sass",
         "scss"
     )
@@ -268,11 +281,11 @@ fullspace.set_productions(re.compile('([ \t]*\n)*[ \t]*'))
 
 id.set_productions(
     '#',
-    Either(
+    OneOrMore(Either(
         variable,
         ident
-    )
-).set_action(lambda _0, i: (NodeId(i)) )
+    ))
+).set_action(lambda _0, i: (NodeId("".join(i))) )
 
 ident.set_productions(re.compile('[-$\w:]+', re.U))
 
@@ -295,10 +308,17 @@ tag.set_productions(
     ident
 ).set_action(lambda _0, i: (NodeTag(i)) )
 
-variable.set_productions(
-    "$",
-    OneOrMoreSeparated.instanciate(variable_dotted, "|")
-).set_action(lambda _0, i: (u("{{{{ {0} }}}}").format(u("|").join(i))) )
+variable.set_productions(Either(
+    Rule(
+        "$",
+        OneOrMoreSeparated.instanciate(variable_dotted, "|")
+    ).set_action(lambda _0, i: (u("{{{{ {0} }}}}").format(u("|").join(i))) ),
+    Rule(
+        "{{",
+        allbut_jinja_print,
+        "}}"
+    ).set_action(lambda b, c, e: (b + c + e) )
+))
 
 variable_component.set_productions(
     vident,
