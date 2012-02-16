@@ -72,6 +72,7 @@ extern_tag = Rule().set_name("extern_tag")
 fullspace = Rule().set_name("fullspace")
 id = Rule().set_name("id")
 ident = Rule().set_name("ident")
+single_identifier = Rule().set_name("single_identifier")
 single_prop = Rule().set_name("single_prop")
 string = Rule().set_name("string")
 tag = Rule().set_name("tag")
@@ -91,14 +92,14 @@ lineelt = FunctionRule().set_name("lineelt")
 
 # Function Rules implementation
 def _block(indent):
-    def fn_4(lines):
+    def fn_6(lines):
         
                 if indent == 0:
                     global _is
                     _is = []
                 
 
-    def action_5(lines):
+    def action_7(lines):
         return NodeBlock(lines)
 
     return Rule(
@@ -107,15 +108,15 @@ def _block(indent):
             lambda start: ( checkindent(indent, start) ) ,
             blockstart.instanciate(indent)
         ).set_action(lambda start, block: ([start, block]) )),
-        fn_4
-    ).set_action(action_5)
+        fn_6
+    ).set_action(action_7)
 block.set_fn(_block)
 
 def _blockstart(indent):
-    def action_2(t, _1, a, _3, i, _5, b):
+    def action_4(t, _1, a, _3, i, _5, b):
         return t.set_attributes(a).set_block(b).set_line(i)
 
-    def action_3(c, _1, _2):
+    def action_5(c, _1, _2):
         return c
 
     return Either(
@@ -127,7 +128,7 @@ def _blockstart(indent):
             Optional(line),
             EOL,
             block.instanciate(indent + 1)
-        ).set_action(action_2),
+        ).set_action(action_4),
         Rule(
             OneOrMore(attribute),
             Optional(line),
@@ -154,7 +155,7 @@ def _blockstart(indent):
             line,
             Optional(_space),
             Optional(EOL)
-        ).set_action(action_3),
+        ).set_action(action_5),
         Rule(
             Optional(_space),
             Optional(EOL)
@@ -171,7 +172,10 @@ def _delimited_line(delim):
 delimited_line.set_fn(_delimited_line)
 
 def _line(terminator=EOL):
-    return OneOrMore(lineelt.instanciate(terminator)).set_action(lambda e: (NodeLine(e)) )
+    return Rule(
+        Optional(_space),
+        OneOrMore(lineelt.instanciate(terminator))
+    ).set_action(lambda _0, e: (NodeLine(e)) )
 line.set_fn(_line)
 
 def _lineelt(terminator):
@@ -197,6 +201,7 @@ def _lineelt(terminator):
             Optional(_space),
             Optional(line.instanciate(terminator))
         ).set_action(lambda t, _1, a, _3, i: (t.set_attributes(a).set_line(i)) ),
+        comment,
         variable,
         Rule(
             '\\',
@@ -214,12 +219,19 @@ lineelt.set_fn(_lineelt)
 # Simple Rules implementation
 EOL.set_productions("\n")
 
-_space.set_productions(re.compile('[ \t]*'))
+def action_0(c):
+    return re.sub("#\s[^\n]*", "", c)
 
-access_or_funcall.set_productions(Either(
-    Balanced.instanciate("[", "]", "\\"),
-    Balanced.instanciate("(", ")", "\\")
-).set_action(lambda b: ("".join(b)) ))
+_space.set_productions(
+    re.compile('[ \t]*(#\s+.*$)?')
+).set_action(action_0)
+
+access_or_funcall.set_productions(
+    Either(
+        Balanced.instanciate("[", "]", "\\"),
+        Balanced.instanciate("(", ")", "\\")
+    )
+).set_action(lambda b: ("".join(b)) )
 
 attrib.set_productions(
     ident,
@@ -240,28 +252,29 @@ attribute.set_productions(
     )
 ).set_action(lambda _0, a: (a) )
 
-def action_0(start, contents):
+def action_2(start, contents):
     # We just nuke the indentation from the raw text.
     return [start, contents]
 
-def action_1(lines):
+def action_3(lines):
     return [lastindent(), lines]
 
-blockraw.set_productions(OneOrMore(Rule(
-    fullspace,
-    lambda start: ( higherindent(start) ) ,
-    re.compile('[^\n]*')
-).set_action(action_0)).set_action(action_1))
+blockraw.set_productions(
+    OneOrMore(Rule(
+        fullspace,
+        lambda start: ( higherindent(start) ) ,
+        re.compile('[^\n]*')
+    ).set_action(action_2))
+).set_action(action_3)
 
 cls.set_productions(
     ".",
-    OneOrMore(Either(
-        variable,
-        ident
-    ))
-).set_action(lambda _0, i: (NodeClass("".join(i))) )
+    single_identifier
+).set_action(lambda _0, i: (NodeClass(i)) )
 
-comment.set_productions(re.compile('\s*#\s.*', re.M))
+comment.set_productions(
+    re.compile('\s*#[^\n]*')
+).set_action(lambda _0: ("") )
 
 extern_tag.set_productions(
     ":",
@@ -277,24 +290,31 @@ extern_tag.set_productions(
     )
 ).set_action(lambda _0, i: (NodeExtern(i)) )
 
-fullspace.set_productions(re.compile('([ \t]*\n)*[ \t]*'))
+def action_1(c):
+    return re.sub("#\s[^\n]*", "", c)
+
+fullspace.set_productions(
+    re.compile('([ \t]*(#\s+.*)?(\n|$))*[ \t]*')
+).set_action(action_1)
 
 id.set_productions(
     '#',
-    OneOrMore(Either(
-        variable,
-        ident
-    ))
-).set_action(lambda _0, i: (NodeId("".join(i))) )
+    single_identifier
+).set_action(lambda _0, i: (NodeId(i)) )
 
 ident.set_productions(re.compile('[-$\w:]+', re.U))
 
+single_identifier.set_productions(
+    OneOrMore(Either(
+        "\\$",
+        variable,
+        re.compile('[^\s#\.]')
+    ))
+).set_action(lambda i: ("".join(i)) )
+
 single_prop.set_productions(
     "\\",
-    Either(
-        variable,
-        ident
-    )
+    single_identifier
 ).set_action(lambda _0, i: (NodeSingle(i)) )
 
 string.set_productions(Either(
@@ -325,7 +345,9 @@ variable_component.set_productions(
     ZeroOrMore(access_or_funcall)
 ).set_action(lambda i, a: (i + "".join(a)) )
 
-variable_dotted.set_productions(OneOrMoreSeparated.instanciate(variable_component, ".").set_action(lambda i: (u(".").join(i)) ))
+variable_dotted.set_productions(
+    OneOrMoreSeparated.instanciate(variable_component, ".")
+).set_action(lambda i: (u(".").join(i)) )
 
 vident.set_productions(re.compile('[a-zA-Z_][a-zA-Z0-9_]*'))
 

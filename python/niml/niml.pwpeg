@@ -53,9 +53,13 @@ allbut_jinja_print = allbut_regexp("}}", '"}}"')
 
 %%
 
-comment = /\s*#\s.*/m
-_space = /[ \t]*/
-fullspace = /([ \t]*\n)*[ \t]*/
+comment = /\s*#[^\n]*/ -> ""
+_space = c:/[ \t]*(#\s+.*$)?/ ->
+    return re.sub("#\s[^\n]*", "", c)
+
+fullspace = c:/([ \t]*(#\s+.*)?(\n|$))*[ \t]*/ ->
+    return re.sub("#\s[^\n]*", "", c)
+
 EOL = "\n"
 
 ident = /[-$\w:]+/u
@@ -74,14 +78,16 @@ string = delimited_line("\"") | delimited_line("'")
 tag = "@" !"/" i:ident -> NodeTag(i)
 extern_tag = ":" i:["plain" | "javascript" | "css" | "coco" | "coffeescript" | "coffee" | "sass" | "scss"] -> NodeExtern(i)
 
-id = '#' i:[variable | ident]+ -> NodeId("".join(i))
+single_identifier = i:["\\$" | variable | /[^\s#\.]/ ]+ -> "".join(i)
+
+id = '#' i:single_identifier -> NodeId(i)
     # <div id="zoum">
 
-cls = "." i:[variable | ident]+ -> NodeClass("".join(i))
+cls = "." i:single_identifier -> NodeClass(i)
+
+single_prop = "\\" i:single_identifier -> NodeSingle(i)
 
 attrib = key:ident "=" value:[ string | line(/\s/) ] -> NodeNamed(key, value)
-
-single_prop = "\\" i:[variable | ident] -> NodeSingle(i)
 
 attribute = _space? a:[id | cls | single_prop | attrib] -> a
 
@@ -94,13 +100,15 @@ lineelt(terminator) =
     | t:tag _space? a:attribute* _space? i:line(terminator)? ->
         t.set_attributes(a).set_line(i)
 
+    | comment
+
     | variable
 
     | \\ t:/./ -> t
         # Backslashed terminator.
     | !terminator c:/./ -> c
 
-line(terminator=EOL) = e:lineelt(terminator)+ -> NodeLine(e)
+line(terminator=EOL) = _space? e:lineelt(terminator)+ -> NodeLine(e)
 
 blockraw =
     lines:[
