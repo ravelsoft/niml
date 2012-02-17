@@ -1,5 +1,5 @@
 import re
-from subprocess import check_output, Popen, PIPE
+from subprocess import Popen, PIPE
 
 from .nodes import NodeJinja, NodeBlock, NodeLine
 from .niml import getindent
@@ -28,25 +28,24 @@ def adjuststarts(indent, linelists):
         result[0][0] = "\n" + result[0][0]# [:-indent]
         return result
 
+def run(cmd, stdin=None):
+    p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    res = p.communicate(stdin) if stdin else p.communicate()
+    if res[1]:
+        raise Exception(res[1])
+    return res[0]
+
 def compile_coco(txt):
-    return check_output(["coco", "-bpce", txt])
+    return run(["coco", "-bpce", txt])
 
 def compile_coffee(txt):
-    return check_output(["coffee", "-bce", txt])
+    return run(["coffee", "-bce", txt])
 
 def compile_sass(txt):
-    p = Popen(["sass", "-s"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    res = p.communicate(txt)
-    if res[1]:
-        raise Exception(res[1])
-    return res[0]
+    return run(["sass", "-s"], txt)
 
 def compile_scss(txt):
-    p = Popen(["sass", "-s", "--scss"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    res = p.communicate(txt)
-    if res[1]:
-        raise Exception(res[1])
-    return res[0]
+    return run(["sass", "-s", "--scss"], txt)
 
 # Python 3 compatibility gimmick to avoid unicode errors.
 try:
