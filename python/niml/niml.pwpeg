@@ -53,7 +53,7 @@ allbut_jinja_print = allbut_regexp("}}", '"}}"')
 
 %%
 
-comment = /\s*#[^\n]*/ -> ""
+comment = /\s*#\s[^\n]*/ -> ""
 _space = c:/[ \t]*(#\s+.*$)?/ ->
     return re.sub("#\s[^\n]*", "", c)
 
@@ -85,7 +85,7 @@ id = '#' i:single_identifier -> NodeId(i)
 
 cls = "." i:single_identifier -> NodeClass(i)
 
-single_prop = "\\" i:single_identifier -> NodeSingle(i)
+single_prop = \\ i:single_identifier -> NodeSingle(i)
 
 attrib = key:ident "=" value:[ string | line(/\s/) ] -> NodeNamed(key, value)
 
