@@ -2,7 +2,11 @@
 import re
 import sys
 import os
+import codecs
+import locale
 from os.path import dirname, join
+
+sys.stdout = codecs.getwriter(sys.stdout.encoding or locale.getpreferredencoding() or 'UTF-8')(sys.stdout)
 
 currentdir = os.getcwd()
 os.chdir(dirname(__file__))
