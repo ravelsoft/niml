@@ -47,6 +47,9 @@ def compile_sass(txt):
 def compile_scss(txt):
     return run(["sass", "-s", "--scss"], txt)
 
+def compile_stylus(txt):
+    return run(["stylus"], txt)
+
 # Python 3 compatibility gimmick to avoid unicode errors.
 try:
     unicode = unicode
@@ -151,6 +154,8 @@ class NodeVisitor(object):
                 txt = compile_scss(txt)
             if node.extern_name == "sass":
                 txt = compile_sass(txt)
+            if node.extern_name == "stylus":
+                txt = compile_stylus(txt)
 
             node.block = None
             node.set_line(NodeLine([ txt ]))

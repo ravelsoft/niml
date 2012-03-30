@@ -76,7 +76,7 @@ delimited_line(delim) = delim l:line(delim)? delim -> l or ""
 string = delimited_line("\"") | delimited_line("'")
 
 tag = "@" !"/" i:ident -> NodeTag(i)
-extern_tag = ":" i:["plain" | "javascript" | "css" | "coco" | "coffeescript" | "coffee" | "sass" | "scss"] -> NodeExtern(i)
+extern_tag = ":" i:["plain" | "javascript" | "css" | "coco" | "coffeescript" | "coffee" | "sass" | "scss" | "stylus"] -> NodeExtern(i)
 
 single_identifier = i:["\\$" | variable | /[^\s#\.]/ ]+ -> "".join(i)
 

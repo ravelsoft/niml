@@ -286,7 +286,8 @@ extern_tag.set_productions(
         "coffeescript",
         "coffee",
         "sass",
-        "scss"
+        "scss",
+        "stylus"
     )
 ).set_action(lambda _0, i: (NodeExtern(i)) )
 

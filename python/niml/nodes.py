@@ -63,7 +63,7 @@ class NodeExtern(NodeTag):
     def __init__(self, name):
         self.extern_name = name
 
-        if name in ["css", "sass", "scss"]:
+        if name in ["css", "sass", "scss", "stylus"]:
             super(NodeExtern, self).__init__("style")
             self.set_attributes([
                 NodeNamed("rel", "stylesheet"),
