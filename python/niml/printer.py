@@ -121,7 +121,7 @@ class NodeVisitor(object):
                     if not isinstance(nxt, NodeJinja) or nxt.name not in ["elif", "else"]:
                         res[-1] = addend(res[-1], "{{% endif %}}".format(b[1].name))
 
-                if b[1].name in ["for", "macro", "filter", "block"]:
+                if b[1].name in ["for", "macro", "filter", "block", "call"]:
                     res[-1] = addend(res[-1], unicode("{{% end{0} %}}").format(b[1].name))
 
             #if b[2]:
