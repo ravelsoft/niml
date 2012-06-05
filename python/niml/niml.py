@@ -314,7 +314,7 @@ single_identifier.set_productions(
 ).set_action(lambda i: ("".join(i)) )
 
 single_prop.set_productions(
-    '\\',
+    "=",
     single_identifier
 ).set_action(lambda _0, i: (NodeSingle(i)) )
 
